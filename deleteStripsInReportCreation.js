@@ -1,7 +1,6 @@
 const { chromium } = require('playwright');
 
 (async () => {
-
     const startTime = Date.now(); // ⏳ Start time
     const browser = await chromium.launch({ headless: false, args: ['--start-maximized'] });
     const context = await browser.newContext({ viewport: null });
@@ -18,11 +17,23 @@ const { chromium } = require('playwright');
     await page.click("//span[normalize-space()='SEARCH']");
     await page.waitForTimeout(2000);
     await page.click("(//span[normalize-space()='View'])[2]");
-    await page.click("//a[normalize-space()=' Report Creation ']");
+    await page.waitForTimeout(2000);
+    await page.waitForSelector("//a[contains(text(),'Report Creation')]", { state: 'visible' });
+    await page.click("//a[contains(text(),'Report Creation')]");
 
-    await page.waitForSelector("//span[normalize-space()=' Selected Strips ']", { visible: true });
-    await page.click("//a[normalize-space()=' Selected Strips ']");
+    await page.waitForSelector("//button[normalize-space()='Selected Strips']", { state: 'visible' });
+    await page.click("//button[normalize-space()='Selected Strips']");
 
+    // Loop until the delete button is no longer visible
+    await page.waitForTimeout(2000);
+    await page.waitForSelector("(//div[10]//i[1]//*[name()='svg'])[1]", { state: 'visible' });
+    while (await page.locator("(//div[10]//i[1]//*[name()='svg'])[1]").isVisible()) {
+        await page.waitForSelector("(//div[10]//i[1]//*[name()='svg'])[1]", { state: 'visible' });
+        await page.click("(//div[10]//i[1]//*[name()='svg'])[1]");
+        await page.waitForTimeout(500); // Short delay to allow UI updates
+    }
+
+    console.log("✅ All strips deleted!");
 
     const endTime = Date.now(); // ⏳ Capture end time AFTER loop
     const timeTakenSec = (endTime - startTime) / 1000; // Convert to seconds
